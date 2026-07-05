@@ -1,0 +1,218 @@
+:root {
+	--accent: #d97757;
+	--text: #f5f4f2;
+	--bg: #1b1a19;
+	--muted: rgba(245, 244, 242, 0.55);
+	--track: rgba(245, 244, 242, 0.12);
+	--ok: #6bbf7b;
+	--warn: #e0b341;
+	--danger: #e5654b;
+	/* Spacing is expressed in rem so it scales with the JS-set root font size. */
+	--gap: 0.7rem;
+}
+
+/* Root font size is set at runtime by widget.js (fitFont) between ~10px and
+   ~20px so the content always fills, but stays legible, on any tile size.
+   Provide a sane fallback for first paint before the script runs. */
+html {
+	font-size: 15px;
+}
+
+* {
+	box-sizing: border-box;
+	margin: 0;
+	padding: 0;
+}
+
+html,
+body {
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+}
+
+body {
+	background: var(--bg);
+	color: var(--text);
+	font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+	-webkit-font-smoothing: antialiased;
+}
+
+.widget {
+	width: 100%;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	padding: 0.95rem 1.15rem;
+	gap: var(--gap);
+	background:
+		radial-gradient(120% 90% at 100% 0%, rgba(217, 119, 87, 0.14), transparent 55%),
+		var(--bg);
+}
+
+/* Header */
+.head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	flex: 0 0 auto;
+}
+
+.brand {
+	display: flex;
+	align-items: center;
+	gap: 0.55rem;
+	min-width: 0;
+}
+
+.logo {
+	width: 1.45rem;
+	height: 1.45rem;
+	flex: 0 0 auto;
+	background: var(--accent);
+	-webkit-mask: center / contain no-repeat
+		url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'%3E%3Cg transform='translate(64 64)' stroke='%23000' stroke-width='9' stroke-linecap='round'%3E%3Cline y1='-38' y2='-14'/%3E%3Cline x1='27' y1='-27' x2='10' y2='-10'/%3E%3Cline x1='38' x2='14'/%3E%3Cline x1='27' y1='27' x2='10' y2='10'/%3E%3Cline y1='38' y2='14'/%3E%3Cline x1='-27' y1='27' x2='-10' y2='10'/%3E%3Cline x1='-38' x2='-14'/%3E%3Cline x1='-27' y1='-27' x2='-10' y2='-10'/%3E%3C/g%3E%3Ccircle r='7'/%3E%3C/svg%3E");
+	mask: center / contain no-repeat
+		url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'%3E%3Cg transform='translate(64 64)' stroke='%23000' stroke-width='9' stroke-linecap='round'%3E%3Cline y1='-38' y2='-14'/%3E%3Cline x1='27' y1='-27' x2='10' y2='-10'/%3E%3Cline x1='38' x2='14'/%3E%3Cline x1='27' y1='27' x2='10' y2='10'/%3E%3Cline y1='38' y2='14'/%3E%3Cline x1='-27' y1='27' x2='-10' y2='10'/%3E%3Cline x1='-38' x2='-14'/%3E%3Cline x1='-27' y1='-27' x2='-10' y2='-10'/%3E%3C/g%3E%3Ccircle r='7'/%3E%3C/svg%3E");
+}
+
+.brand-name {
+	font-size: 0.95rem;
+	font-weight: 600;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--muted);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.status-dot {
+	width: 0.5rem;
+	height: 0.5rem;
+	border-radius: 50%;
+	flex: 0 0 auto;
+	background: var(--muted);
+	box-shadow: 0 0 0 0 transparent;
+	transition: background 0.3s ease;
+}
+.status-dot.online {
+	background: var(--ok);
+}
+.status-dot.stale {
+	background: var(--warn);
+}
+.status-dot.offline {
+	background: var(--danger);
+}
+
+/* Rows */
+.rows {
+	flex: 1 1 auto;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	gap: var(--gap);
+	min-height: 0;
+}
+
+.row {
+	display: flex;
+	flex-direction: column;
+	gap: 0.28rem;
+}
+
+.row-top {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 0.5rem;
+}
+
+.row-label {
+	font-size: 1rem;
+	font-weight: 500;
+	color: var(--text);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.row-label .sub {
+	color: var(--muted);
+	font-weight: 400;
+}
+
+.row-pct {
+	font-size: 1.05rem;
+	font-weight: 700;
+	font-variant-numeric: tabular-nums;
+	flex: 0 0 auto;
+}
+
+.bar {
+	position: relative;
+	width: 100%;
+	height: 0.5rem;
+	background: var(--track);
+	border-radius: 999px;
+	overflow: hidden;
+}
+
+.bar-fill {
+	position: absolute;
+	inset: 0 auto 0 0;
+	width: 0%;
+	border-radius: 999px;
+	background: var(--accent);
+	transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1), background 0.3s ease;
+}
+.bar-fill.ok {
+	background: var(--accent);
+}
+.bar-fill.warn {
+	background: var(--warn);
+}
+.bar-fill.danger {
+	background: var(--danger);
+}
+
+.row-reset {
+	font-size: 0.72rem;
+	color: var(--muted);
+	font-variant-numeric: tabular-nums;
+}
+
+/* Footer */
+.foot {
+	flex: 0 0 auto;
+	display: flex;
+	justify-content: flex-end;
+}
+.updated {
+	font-size: 0.65rem;
+	color: var(--muted);
+	font-variant-numeric: tabular-nums;
+}
+
+/* Message overlay (offline / unavailable) */
+.message {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	text-align: center;
+	padding: 1.2rem;
+	background: var(--bg);
+	color: var(--muted);
+	font-size: 0.95rem;
+	line-height: 1.5;
+}
+.message.hidden {
+	display: none;
+}
+
+.dim {
+	opacity: 0.35;
+	filter: saturate(0.4);
+}

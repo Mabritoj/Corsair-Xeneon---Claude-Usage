@@ -1,0 +1,23 @@
+# Node
+node_modules/
+npm-debug.log*
+
+# Bridge runtime artifacts (may contain usage snapshots / logs)
+bridge/cache/
+bridge/*.log
+bridge/usage-cache.json
+
+# Packaged widget output
+*.icuewidget
+
+# OS / editor
+Thumbs.db
+Desktop.ini
+.DS_Store
+.vscode/
+.idea/
+
+# Never commit credentials (bridge reads them from %USERPROFILE%\.claude, never stores here)
+*.credentials.json
+.credentials.json
+.cursor/

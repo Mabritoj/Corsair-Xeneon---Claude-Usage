@@ -1,0 +1,19 @@
+{
+	"en": {
+		"translation": {
+			"Claude Usage": "Claude Usage",
+			"Connection": "Connection",
+			"Display": "Display",
+			"Appearance": "Appearance",
+			"Bridge Port": "Bridge Port",
+			"Poll Interval (seconds)": "Poll Interval (seconds)",
+			"Max Model Rows": "Max Model Rows",
+			"Accent Color": "Accent Color",
+			"Text Color": "Text Color",
+			"Background Color": "Background Color",
+			"Port of the local Claude Usage Bridge (default 37650).": "Port of the local Claude Usage Bridge (default 37650).",
+			"How often the widget fetches usage from the local bridge (default 60s).": "How often the widget fetches usage from the local bridge (default 60s).",
+			"Maximum number of per-model weekly rows to show (default 3).": "Maximum number of per-model weekly rows to show (default 3)."
+		}
+	}
+}

@@ -1,0 +1,14 @@
+{
+  "name": "claude-usage-bridge",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Local bridge that serves Claude subscription usage to the iCUE Xeneon Edge widget.",
+  "type": "module",
+  "main": "server.mjs",
+  "scripts": {
+    "start": "node server.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

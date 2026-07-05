@@ -1,0 +1,21 @@
+{
+	"author": "Jonathan",
+	"id": "com.jonathan.claudeusage",
+	"name": "Claude Usage",
+	"description": "Monitors your Claude subscription usage: current 5-hour session, weekly all-models limit, and any per-model weekly limits. Polls a local bridge every minute.",
+	"version": "1.0.0",
+	"preview_icon": "resources/icon.svg",
+	"min_app_version": "5.47",
+	"min_framework_version": "1.0.0",
+	"os": [
+		{
+			"platform": "windows"
+		}
+	],
+	"supported_devices": [
+		{
+			"type": "dashboard_lcd"
+		}
+	],
+	"interactive": false
+}
