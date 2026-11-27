@@ -16,13 +16,14 @@ import crypto from "node:crypto";
 
 const PORT = Number(process.env.PORT) || 37650;
 const HOST = "127.0.0.1";
-const CACHE_TTL_MS = Number(process.env.CACHE_TTL_MS) || 60_000;
+const CACHE_TTL_MS = Number(process.env.CACHE_TTL_MS) || 180_000;
 
 const CREDENTIALS_PATH =
   process.env.CLAUDE_CREDENTIALS_PATH ||
   path.join(os.homedir(), ".claude", ".credentials.json");
 
-const USAGE_ENDPOINT = "https://api.anthropic.com/api/oauth/usage";
+const USAGE_ENDPOINT =
+  process.env.USAGE_ENDPOINT || "https://api.anthropic.com/api/oauth/usage";
 const BETA_HEADER = "oauth-2025-04-20";
 const CLAUDE_CODE_CLIENT_ID = "9d1c250a-e61b-44d9-88ed-5944d1962f5e";
 // Current Claude Code token endpoint, with the legacy one as a fallback.
@@ -45,6 +46,11 @@ const KNOWN_LABELS = {
 };
 
 let cache = null; // { at: number, payload: object }
+let inflight = null; // shared upstream request promise
+let blockedUntil = 0; // epoch ms; no upstream calls before this after a 429
+let backoffMs = 0;
+const BACKOFF_MIN_MS = 60_000;
+const BACKOFF_MAX_MS = 15 * 60_000;
 
 function log(...args) {
   console.log(new Date().toISOString(), ...args);
@@ -333,9 +339,19 @@ async function fetchUsage() {
 
   if (res.status === 429) {
     const retryAfter = Number(res.headers.get("retry-after"));
+    const rlHeaders = [...res.headers.entries()]
+      .filter(([k]) => k === "retry-after" || k.includes("ratelimit"))
+      .map(([k, v]) => `${k}=${v}`)
+      .join(" ");
+    let body = "";
+    try {
+      body = (await res.text()).slice(0, 200);
+    } catch {}
+    log(`usage 429 headers[${rlHeaders}] body[${body}]`);
     const err = new Error("Rate limited by Anthropic usage endpoint (429).");
     err.code = "RATE_LIMITED";
-    err.retryAfterMs = Number.isFinite(retryAfter) ? retryAfter * 1000 : null;
+    err.retryAfterMs =
+      Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1000 : null;
     throw err;
   }
 
@@ -349,35 +365,60 @@ async function fetchUsage() {
   return { payload: normalizeUsage(raw) };
 }
 
-// Returns a payload to serve, using cache where appropriate.
+function failurePayload(code, message, retryAt) {
+  const extra = retryAt ? { retryAt: new Date(retryAt).toISOString() } : {};
+  if (cache) {
+    return { ...cache.payload, stale: true, error: code, ...extra };
+  }
+  return {
+    ok: false,
+    error: code,
+    message,
+    fetchedAt: new Date().toISOString(),
+    ...extra,
+  };
+}
+
+// One upstream attempt, with backoff bookkeeping. Shared by all callers.
+async function refreshUsage() {
+  try {
+    const { payload } = await fetchUsage();
+    cache = { at: Date.now(), payload };
+    blockedUntil = 0;
+    backoffMs = 0;
+    return payload;
+  } catch (err) {
+    if (err.code === "RATE_LIMITED") {
+      backoffMs = err.retryAfterMs
+        ? err.retryAfterMs
+        : Math.min(backoffMs ? backoffMs * 2 : BACKOFF_MIN_MS, BACKOFF_MAX_MS);
+      blockedUntil = Date.now() + backoffMs;
+      log(`rate limited; backing off ${Math.round(backoffMs / 1000)}s`);
+    } else {
+      log(`fetch failed (${err.code || err.message})`);
+    }
+    return failurePayload(err.code || "ERROR", err.message, blockedUntil || 0);
+  }
+}
+
+// Returns a payload to serve, using cache / backoff / in-flight dedupe.
 async function getUsage() {
   const now = Date.now();
   if (cache && now - cache.at < CACHE_TTL_MS) {
     return { payload: cache.payload, cached: true };
   }
-  try {
-    const { payload } = await fetchUsage();
-    cache = { at: now, payload };
-    return { payload, cached: false };
-  } catch (err) {
-    // On failure, serve stale cache if we have any.
-    if (cache) {
-      log(`fetch failed (${err.code || err.message}); serving stale cache`);
-      return {
-        payload: { ...cache.payload, stale: true, error: err.code || "ERROR" },
-        cached: true,
-      };
-    }
+  if (now < blockedUntil) {
     return {
-      payload: {
-        ok: false,
-        error: err.code || "ERROR",
-        message: err.message,
-        fetchedAt: new Date().toISOString(),
-      },
-      cached: false,
+      payload: failurePayload("RATE_LIMITED", "Backing off after 429.", blockedUntil),
+      cached: true,
     };
   }
+  if (!inflight) {
+    inflight = refreshUsage().finally(() => {
+      inflight = null;
+    });
+  }
+  return { payload: await inflight, cached: false };
 }
 
 const server = http.createServer(async (req, res) => {
